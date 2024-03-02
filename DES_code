@@ -1,0 +1,1809 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Jan 16 20:28:41 2022
+
+@author: yvomep
+"""
+
+import simpy
+import random
+import numpy
+
+#                          O U T P U T   M O N I T O R   I N   M I N U T E S
+# -----------------------------------------------------------------------------
+
+def monitor_minutes ( env ) :
+    
+    global time_min, tr_que_len, ex_que_len, rx_que_len, rxMach_que_len, lab_que_len
+    global or_que_len, bed_que_len, icu_que_len, dial_que_len, hemSg_que_len
+    global m_wt_tr_5p_pT1, m_wt_tr_pT1, m_wt_ex_5p_pT1, m_wt_ex_pT1
+    global m_wt_tr_5p_pT2, m_wt_tr_pT2, m_wt_ex_5p_pT2, m_wt_ex_pT2, m_wt_rx_5p_pT2, m_wt_rx_pT2
+    global m_wt_tr_5p_pT3, m_wt_tr_pT3, m_wt_ex_5p_pT3, m_wt_ex_pT3, m_wt_rx_5p_pT3
+    global m_wt_rx_pT3, m_wt_bd_5p_pT3, m_wt_bd_pT3, m_wt_sg_5p_pT3, m_wt_sg_pT3
+    global m_wt_tr_5p_pT4, m_wt_tr_pT4, m_wt_ex_5p_pT4, m_wt_ex_pT4 
+    global m_wt_rx_5p_pT4, m_wt_rx_pT4, m_wt_sg_5p_pT4, m_wt_sg_pT4
+    global m_wt_icu_5p_pT4, m_icu_bd_pT4, m_wt_bd2_5p_pT4, m_wt_bd2_pT4
+    global m_wt_tr_5p_pT5, m_wt_tr_pT5, m_wt_ex_5p_pT5, m_wt_ex_pT5
+    global m_wt_lab_5p_pT5, m_wt_lab_pT5, m_wt_icu_5p_pT5, m_icu_bd_pT5
+    global m_wt_dial_5p_pT5, m_dial_bd_pT5, m_wt_bd2_5p_pT5, m_wt_bd2_pT5
+    global m_wt_sg_5p_pT5, m_wt_sg_pT5
+    global m_wt_res_5p_pT6, m_wt_res_pT6, m_wt_rx_5p_pT6, m_wt_rx_pT6
+    global m_wt_sg_5p_pT6, m_wt_sg_pT6
+    global m_wt_icu_5p_pT6, m_icu_bd_pT6, m_wt_bd2_5p_pT6, m_wt_bd2_pT6
+    global m_wt_tr_5p_pT7, m_wt_tr_pT7, m_wt_ex_5p_pT7, m_wt_ex_pT7
+    global m_wt_hemSg_5p_pT7, m_wt_hemSg_pT7
+    global m_wt_icu_5p_pT7, m_icu_bd_pT7, m_wt_bd2_5p_pT7, m_wt_bd2_pT7
+    global m_los_5p_pT1, m_los_5p_pT2, m_los_5p_pT3, m_los_5p_pT4
+    global m_los_5p_pT5, m_los_5p_pT6, m_los_5p_pT7
+    global m_ttt_5p_pT1, m_ttt_5p_pT2, m_ttt_5p_pT3, m_ttt_5p_pT4
+    global m_ttt_5p_pT5, m_ttt_5p_pT6, m_ttt_5p_pT7
+    global m_uAS_5p_pT1, m_uAS_5p_pT2, m_uAS_5p_pT3, m_uAS_5p_pT4
+    global m_uAS_5p_pT5, m_uAS_5p_pT6, m_uAS_5p_pT7
+    global pT1_cum, pT2_cum, pT3_cum, pT4_cum, pT5_cum, pT6_cum, pT7_cum
+    global pT1_cens, pT2_cens, pT3_cens, pT4_cens, pT5_cens, pT6_cens, pT7_cens
+    
+    while True:
+        
+        if env.now > warm_up:
+            
+            time_min.append (env.now)
+            
+            res_que_len.append ( len(resRoom.queue) )
+            tr_que_len.append ( len(triageBox.queue) )
+            ex_que_len.append ( len(examBox.queue) )
+            rx_que_len.append ( len(rxRoom.queue) )
+            rxMach_que_len.append ( len(rxMach.queue) )
+            lab_que_len.append ( len(lab.queue) )
+            or_que_len.append ( len(OR.queue) )
+            bed_que_len.append ( len(bed.queue) )
+            icu_que_len.append ( len(ICU.queue) )
+            dial_que_len.append ( len(dialMach.queue) )
+            hemSg_que_len.append ( len(catLab.queue) )
+            
+            m_wt_tr_5p_pT1.append ( numpy.mean(triage_queuing_pT1[-1*npatMeanWT:]) )
+            m_wt_tr_pT1.append ( numpy.mean(triage_queuing_pT1) )
+            m_wt_ex_5p_pT1.append ( numpy.mean(exam_queuing_pT1[-1*npatMeanWT:]) )
+            m_wt_ex_pT1.append ( numpy.mean(exam_queuing_pT1) )
+
+            m_wt_tr_5p_pT2.append ( numpy.mean(triage_queuing_pT2[-1*npatMeanWT:]) )
+            m_wt_tr_pT2.append ( numpy.mean(triage_queuing_pT2) )
+            m_wt_ex_5p_pT2.append ( numpy.mean(exam_queuing_pT2[-1*npatMeanWT:]) )
+            m_wt_ex_pT2.append ( numpy.mean(exam_queuing_pT2) )
+            m_wt_rx_5p_pT2.append ( numpy.mean(rx_queuing_pT2[-1*npatMeanWT:]) )
+            m_wt_rx_pT2.append ( numpy.mean(rx_queuing_pT2) )
+
+            m_wt_tr_5p_pT3.append ( numpy.mean(triage_queuing_pT3[-1*npatMeanWT:]) )
+            m_wt_tr_pT3.append ( numpy.mean(triage_queuing_pT3) )
+            m_wt_ex_5p_pT3.append ( numpy.mean(exam_queuing_pT3[-1*npatMeanWT:]) )
+            m_wt_ex_pT3.append ( numpy.mean(exam_queuing_pT3) )
+            m_wt_rx_5p_pT3.append ( numpy.mean(rx_queuing_pT3[-1*npatMeanWT:]) )
+            m_wt_rx_pT3.append ( numpy.mean(rx_queuing_pT3) )
+            m_wt_bd_5p_pT3.append ( numpy.mean(bed_queuing_pT3[-1*npatMeanWT:]) )
+            m_wt_bd_pT3.append ( numpy.mean(bed_queuing_pT3) )
+            m_wt_sg_5p_pT3.append ( numpy.mean(surg_queuing_pT3[-1*npatMeanWT:]) )
+            m_wt_sg_pT3.append ( numpy.mean(surg_queuing_pT3) )
+            
+            m_wt_tr_5p_pT4.append ( numpy.mean(triage_queuing_pT4[-1*npatMeanWT:]) )
+            m_wt_tr_pT4.append ( numpy.mean(triage_queuing_pT4) )
+            m_wt_ex_5p_pT4.append ( numpy.mean(exam_queuing_pT4[-1*npatMeanWT:]) )
+            m_wt_ex_pT4.append ( numpy.mean(exam_queuing_pT4) )
+            m_wt_rx_5p_pT4.append ( numpy.mean(rx_queuing_pT4[-1*npatMeanWT:]) )
+            m_wt_rx_pT4.append ( numpy.mean(rx_queuing_pT4) )
+            m_wt_sg_5p_pT4.append ( numpy.mean(surg_queuing_pT4[-1*npatMeanWT:]) )
+            m_wt_sg_pT4.append ( numpy.mean(surg_queuing_pT4) )
+            m_wt_icu_5p_pT4.append ( numpy.mean(icu_queuing_pT4[-1*npatMeanWT:]) )
+            m_wt_icu_pT4.append ( numpy.mean(icu_queuing_pT4) )
+            m_wt_bd2_5p_pT4.append ( numpy.mean(bed2_queuing_pT4[-1*npatMeanWT:]) )
+            m_wt_bd2_pT4.append ( numpy.mean(bed2_queuing_pT4) )
+            
+            m_wt_tr_5p_pT5.append ( numpy.mean(triage_queuing_pT5[-1*npatMeanWT:]) )
+            m_wt_tr_pT5.append ( numpy.mean(triage_queuing_pT5) )
+            m_wt_ex_5p_pT5.append ( numpy.mean(exam_queuing_pT5[-1*npatMeanWT:]) )
+            m_wt_ex_pT5.append ( numpy.mean(exam_queuing_pT5) )
+            m_wt_lab_5p_pT5.append ( numpy.mean(lab_queuing_pT5[-1*npatMeanWT:]) )
+            m_wt_lab_pT5.append ( numpy.mean(lab_queuing_pT5) )
+            m_wt_sg_5p_pT5.append ( numpy.mean(surg_queuing_pT5[-1*npatMeanWT:]) )
+            m_wt_sg_pT5.append ( numpy.mean(surg_queuing_pT5) )
+            m_wt_icu_5p_pT5.append ( numpy.mean(icu_queuing_pT5[-1*npatMeanWT:]) )
+            m_wt_icu_pT5.append ( numpy.mean(icu_queuing_pT5) )
+            m_wt_dial_5p_pT5.append ( numpy.mean(dial_queuing_pT5[-1*npatMeanWT:]) )
+            m_wt_dial_pT5.append ( numpy.mean(dial_queuing_pT5) )
+            m_wt_bd2_5p_pT5.append ( numpy.mean(bed2_queuing_pT5[-1*npatMeanWT:]) )
+            m_wt_bd2_pT5.append ( numpy.mean(bed2_queuing_pT5) )
+            
+            m_wt_res_5p_pT6.append ( numpy.mean(res_queuing_pT6[-1*npatMeanWT:]) )
+            m_wt_res_pT6.append ( numpy.mean(res_queuing_pT6) )
+            m_wt_rx_5p_pT6.append ( numpy.mean(rx_queuing_pT6[-1*npatMeanWT:]) )
+            m_wt_rx_pT6.append ( numpy.mean(rx_queuing_pT6) )
+            m_wt_sg_5p_pT6.append ( numpy.mean(surg_queuing_pT6[-1*npatMeanWT:]) )
+            m_wt_sg_pT6.append ( numpy.mean(surg_queuing_pT6) )
+            m_wt_icu_5p_pT6.append ( numpy.mean(icu_queuing_pT6[-1*npatMeanWT:]) )
+            m_wt_icu_pT6.append ( numpy.mean(icu_queuing_pT6) )
+            m_wt_bd2_5p_pT6.append ( numpy.mean(bed2_queuing_pT6[-1*npatMeanWT:]) )
+            m_wt_bd2_pT6.append ( numpy.mean(bed2_queuing_pT6) )
+            
+            m_wt_tr_5p_pT7.append ( numpy.mean(triage_queuing_pT7[-1*npatMeanWT:]) )
+            m_wt_tr_pT7.append ( numpy.mean(triage_queuing_pT7) )
+            m_wt_ex_5p_pT7.append ( numpy.mean(exam_queuing_pT7[-1*npatMeanWT:]) )
+            m_wt_ex_pT7.append ( numpy.mean(exam_queuing_pT7) )
+            m_wt_hemSg_5p_pT7.append ( numpy.mean(hemSurg_queuing_pT7[-1*npatMeanWT:]) )
+            m_wt_hemSg_pT7.append ( numpy.mean(hemSurg_queuing_pT7) )
+            m_wt_icu_5p_pT7.append ( numpy.mean(icu_queuing_pT7[-1*npatMeanWT:]) )
+            m_wt_icu_pT7.append ( numpy.mean(icu_queuing_pT7) )
+            m_wt_bd2_5p_pT7.append ( numpy.mean(bed2_queuing_pT7[-1*npatMeanWT:]) )
+            m_wt_bd2_pT7.append ( numpy.mean(bed2_queuing_pT7) )
+            
+            m_los_5p_pT1.append ( numpy.mean(time_in_path1[-1*npatMeanLOS:]) )
+            m_los_5p_pT2.append ( numpy.mean(time_in_path2[-1*npatMeanLOS:]) )
+            m_los_5p_pT3.append ( numpy.mean(time_in_path3[-1*npatMeanLOS:]) )
+            m_los_5p_pT4.append ( numpy.mean(time_in_path4[-1*npatMeanLOS:]) )
+            m_los_5p_pT5.append ( numpy.mean(time_in_path5[-1*npatMeanLOS:]) )
+            m_los_5p_pT6.append ( numpy.mean(time_in_path6[-1*npatMeanLOS:]) )
+            m_los_5p_pT7.append ( numpy.mean(time_in_path7[-1*npatMeanLOS:]) )
+            
+            m_ttt_5p_pT1.append ( numpy.mean(ttt1[-1*npatMeanTTT:]) )            
+            m_ttt_5p_pT2.append ( numpy.mean(ttt2[-1*npatMeanTTT:]) )
+            m_ttt_5p_pT3.append ( numpy.mean(ttt3[-1*npatMeanTTT:]) )
+            m_ttt_5p_pT4.append ( numpy.mean(ttt4[-1*npatMeanTTT:]) )
+            m_ttt_5p_pT5.append ( numpy.mean(ttt5[-1*npatMeanTTT:]) )
+            m_ttt_5p_pT6.append ( numpy.mean(ttt6[-1*npatMeanTTT:]) )
+            m_ttt_5p_pT7.append ( numpy.mean(ttt7[-1*npatMeanTTT:]) )
+            
+            m_uAS_5p_pT1.append ( unassistedPT1 )
+            m_uAS_5p_pT2.append ( unassistedPT2 )
+            m_uAS_5p_pT3.append ( unassistedPT3 )
+            m_uAS_5p_pT4.append ( unassistedPT4 )
+            m_uAS_5p_pT5.append ( unassistedPT5 )
+            m_uAS_5p_pT6.append ( unassistedPT6 )
+            m_uAS_5p_pT7.append ( unassistedPT7 )
+            
+            pT1_cum.append ( npT1 )
+            pT2_cum.append ( npT2 )
+            pT3_cum.append ( npT3 )
+            pT4_cum.append ( npT4 )
+            pT5_cum.append ( npT5 )
+            pT6_cum.append ( npT6 )
+            pT7_cum.append ( npT7 )
+            
+            pT1_cens.append ( cens1 )
+            pT2_cens.append ( cens2 )
+            pT3_cens.append ( cens3 )
+            pT4_cens.append ( cens4 )
+            pT5_cens.append ( cens5 )
+            pT6_cens.append ( cens6 )
+            pT7_cens.append ( cens7 )
+            
+            if unassistedPT1 > 0.:
+                uAS1_ratio.append ( unassistedPT1/npT1 )
+            if unassistedPT2 > 0.:
+                uAS2_ratio.append ( unassistedPT2/npT2 )
+            if unassistedPT3 > 0.:
+                uAS3_ratio.append ( unassistedPT3/npT3 )
+            if unassistedPT4 > 0.:
+                uAS4_ratio.append ( unassistedPT4/npT4 )
+            if unassistedPT5 > 0.:
+                uAS5_ratio.append ( unassistedPT5/npT5 )
+            if unassistedPT6 > 0.:
+                uAS6_ratio.append ( unassistedPT6/npT6 )
+            if unassistedPT7 > 0.:
+                uAS7_ratio.append ( unassistedPT7/npT7 )
+
+        yield env.timeout (1)
+
+
+
+#                       P A T I E N T   A R R I V A L S   G E N E R A T O R
+# -----------------------------------------------------------------------------
+
+def patient_generator_ed ( env ):
+    
+    global npT1, npT2, npT3, npT4, npT5, npT6, npT7
+    global pT1, pT2, pT3, pT4, pT5, pT6, pT7
+    
+    arr = 0  # counts arrivals every time the 'generator0 is called
+    p_id = 0
+    
+    npT1 = 0
+    npT2 = 0
+    npT3 = 0
+    npT4 = 0
+    npT5 = 0
+    npT6 = 0
+    npT7 = 0
+    
+    # keep generating infinitely
+    while True:
+        
+        # EQ has not arrived
+        if env.now < eqTime:
+            patArr = numpy.random.poisson (lambPreEQ)
+            
+            if patArr != 0:
+                arr += 1
+                print (arr)
+                
+                # NO PATIENT TYPES - assumed to be PT1 for now
+                p_ed = path_1 ( env, mean_triage, mean_exam, mean_treatP1, 
+                               triageBox, examBox, max_ttt12, p_id )
+                
+                # run activity for this patient
+                env.process ( p_ed )
+            
+            yield env.timeout ( 1. )
+            p_id += 1
+        
+        # if EQ has arrived - what day are we in ?
+        elif (env.now - eqTime) < 1.*day :
+            patArr = numpy.random.poisson (lamb1)
+            
+        elif (env.now - eqTime) < 2.*day :
+            patArr = numpy.random.poisson (lamb2)
+
+        elif (env.now - eqTime) < 3.*day :
+            patArr = numpy.random.poisson (lamb3)
+
+        elif (env.now - eqTime) < 4.*day :
+            patArr = numpy.random.poisson (lamb4)
+        
+        elif (env.now - eqTime) < 5.*day :
+            patArr = numpy.random.poisson (lamb5)
+        
+        elif (env.now - eqTime) < 6.*day :
+            patArr = numpy.random.poisson (lamb6)
+        
+        else:
+            patArr = 0
+            
+        if patArr != 0:
+            arr += 1
+            # print (arr)
+            arrivalTime.append(env.now)
+            
+            # randomly choose a patient type
+            patientT = numpy.random.choice( patient_types,1, p=ptp )[0]
+            ptype.append(patientT)
+            
+            if patientT == 1:
+                npT1 += 1
+                pT1.append(env.now)
+                p_ed = path_1 ( env, mean_triage, mean_exam, mean_treatP1, 
+                               triageBox, examBox, max_ttt12, p_id )
+            
+            elif patientT == 2:
+                npT2 += 1
+                pT2.append(env.now)
+                p_ed = path_2 ( env, mean_triage, mean_exam, mean_rx, 
+                               mean_orthopTreat, triageBox, examBox, 
+                               rxRoom, max_ttt12, p_id )
+                
+            elif patientT == 3:
+                npT3 += 1
+                pT3.append(env.now)
+                p_ed = path_3 ( env, mean_triage, mean_exam, mean_rx, 
+                               mean_surg, mean_hosp, triageBox, examBox, 
+                               rxRoom, OR, bed, max_ttt3, p_id )
+                
+            elif patientT == 4:
+                npT4 += 1
+                pT4.append(env.now)
+                p_ed = path_4 ( env, mean_triage, mean_exam, mean_rx, 
+                               mean_surg, mean_icu, mean_hosp, triageBox, 
+                               examBox, rxRoom, OR, ICU, bed, max_ttt4, p_id )
+
+            elif patientT == 5:
+                npT5 += 1
+                pT5.append(env.now)
+                p_ed = path_5 ( env, mean_triage, mean_exam, mean_lab, 
+                               mean_surg, mean_icu, mean_dial, mean_hosp, 
+                               triageBox, examBox, lab, OR, ICU, bed, dialMach, 
+                               max_ttt5, p_id )
+
+            elif patientT == 6:
+                npT6 += 1
+                pT6.append(env.now)
+                p_ed = path_6 ( env, mean_res, mean_resRx, mean_surg, mean_icu, 
+                               mean_hosp, resRoom, OR, ICU, bed, max_ttt6, 
+                               p_id )
+
+            elif patientT == 7:
+                npT7 += 1
+                pT7.append(env.now)
+                p_ed = path_7 ( env, mean_triage, mean_exam, mean_hemSurg, 
+                               mean_icu, mean_hosp, triageBox, examBox, catLab, 
+                               ICU, bed, max_ttt7, p_id )
+            
+            # run activity for this patient
+            env.process ( p_ed )
+        
+        yield env.timeout ( 1. )
+        p_id += 1
+
+        # ---------------------------------------------------------------------        
+
+        
+# Path 1: LACERATION --> Trauma minor treatment
+# TG + EX + TR + DIS
+def path_1 ( env, mean_triage, mean_exam, mean_treatP1, triageBox, examBox, 
+            max_ttt12, p_id ):
+    
+    global triage_queuing_pT1, time_tr_wt_pT1, exam_queuing_pT1
+    global time_ex_wt_pT1, time_in_path1, ttt1
+    global pNeedingBox, unassistedPT1, cens1
+    
+    cens1 += 1 
+    time_patientT1_entered_triage_queue = env.now
+    with triageBox.request() as req:
+        yield req
+        
+        time_patientT1_left_triage_queue = env.now
+        time_in_triage_queue_pT1 = time_patientT1_left_triage_queue - time_patientT1_entered_triage_queue
+        triage_queuing_pT1.append ( time_in_triage_queue_pT1 )
+        time_tr_wt_pT1.append ( env.now )
+        
+        sampled_triage_time = random.expovariate ( 1./mean_triage )
+        # sampled_triage_time = mean_triage
+        yield env.timeout ( sampled_triage_time )
+
+    # request and stay in examination box for evaluation and treatment
+    time_patientT1_entered_exam_queue = env.now
+    pNeedingBox.append ( env.now )
+    with examBox.request() as req:
+        yield req
+        
+        time_patientT1_left_exam_queue = env.now
+        time_in_exam_queue_pT1 = time_patientT1_left_exam_queue - time_patientT1_entered_exam_queue
+        exam_queuing_pT1.append ( time_in_exam_queue_pT1 )
+        time_ex_wt_pT1.append ( env.now )
+        
+        # examination :
+        sampled_exam_time = random.expovariate ( 1./mean_exam )
+        # sampled_exam_time = mean_exam
+        
+        time_patientT1_evaluated = env.now + sampled_exam_time
+        time_to_treatm_pT1 = time_patientT1_evaluated - time_patientT1_entered_triage_queue
+        ttt1.append ( time_to_treatm_pT1 )
+        if time_to_treatm_pT1 > max_ttt12:
+            unassistedPT1 +=1
+        
+        # treatment :
+        sampled_treat_time = random.expovariate ( 1./mean_treatP1 )
+        # sampled_treat_time = mean_treatP1
+                
+        # total time in box :
+        sampled_stay_in_box = sampled_exam_time + sampled_treat_time
+        yield env.timeout ( sampled_stay_in_box )
+    
+    cens1 -= 1 
+    time_patientT1_leaves = env.now
+    time_in_system_pT1 = time_patientT1_leaves - time_patientT1_entered_triage_queue
+    time_in_path1.append ( time_in_system_pT1 )
+    
+# Path 2: NON-SURGICAL FRACTURE --> Orthopedic treatment
+# TG + EX + DS + TR + DIS
+def path_2 ( env, mean_triage, mean_exam, mean_rx, mean_orthopTreat, triageBox, 
+            examBox, rxRoom, max_ttt12, p_id ):
+    
+    global triage_queuing_pT2, time_tr_wt_pT2, exam_queuing_pT2, time_ex_wt_pT2
+    global rx_queuing_pT2, time_rx_wt_pT2, time_in_path2, ttt2
+    global pNeedingBox, unassistedPT2, cens2
+    
+    cens2 += 1
+    time_patientT2_entered_triage_queue = env.now
+    with triageBox.request() as req:
+        yield req
+        
+        time_patientT2_left_triage_queue = env.now
+        time_in_triage_queue_pT2 = time_patientT2_left_triage_queue - time_patientT2_entered_triage_queue
+        triage_queuing_pT2.append ( time_in_triage_queue_pT2 )
+        time_tr_wt_pT2.append ( env.now )
+        
+        sampled_triage_time = random.expovariate ( 1./mean_triage )
+        # sampled_triage_time = mean_triage
+        yield env.timeout ( sampled_triage_time )
+
+    # request and stay in examination box for evaluation and treatment
+    time_patientT2_entered_exam_queue = env.now
+    pNeedingBox.append ( env.now )
+    with examBox.request() as req:
+        yield req
+        
+        time_patientT2_left_exam_queue = env.now
+        time_in_exam_queue_pT2 = time_patientT2_left_exam_queue - time_patientT2_entered_exam_queue
+        exam_queuing_pT2.append ( time_in_exam_queue_pT2 )
+        time_ex_wt_pT2.append ( env.now )        
+        
+        sampled_exam_time = random.expovariate ( 1./mean_exam )
+        # sampled_exam_time = mean_exam
+        yield env.timeout ( sampled_exam_time )
+        
+        # imaging
+        time_patientT2_entered_rx_queue = env.now
+        with rxRoom.request() as req:
+            yield req
+            
+            time_patientT2_left_rx_queue = env.now
+            time_in_rx_queue_pT2 = time_patientT2_left_rx_queue - time_patientT2_entered_rx_queue
+            rx_queuing_pT2.append ( time_in_rx_queue_pT2 )
+            time_rx_wt_pT2.append ( env.now )
+            
+            sampled_rx_time = random.expovariate ( 1./mean_rx )
+            # sampled_rx_time = mean_rx
+            yield env.timeout ( sampled_rx_time )
+        
+        time_patientT2_evaluated = env.now
+        time_to_treatm_pT2 = time_patientT2_evaluated - time_patientT2_entered_triage_queue
+        ttt2.append ( time_to_treatm_pT2 )
+        if time_to_treatm_pT2 > max_ttt12:
+            unassistedPT2 +=1
+        
+        sampled_orthop_treatment_time = random.expovariate ( 1./mean_orthopTreat )
+        # sampled_orthop_treatment_time = mean_orthopTreat
+        yield env.timeout ( sampled_orthop_treatment_time )
+        
+    cens2 -= 1
+    time_patientT2_leaves = env.now
+    time_in_system_pT2 = time_patientT2_leaves - time_patientT2_entered_triage_queue
+    time_in_path2.append ( time_in_system_pT2 )
+    
+# Path 3: SURGICAL FRACTURE (extremity)/SoftTissueInjury/WoundInfection --> Surgical treatment
+# PH + TR + EX + DS + OR + HOS + DIS
+def path_3 ( env, mean_triage, mean_exam, mean_rx, mean_surg, mean_hosp, triageBox, 
+            examBox, rxRoom, OR, bed, max_ttt3, p_id ):
+    
+    global triage_queuing_pT3, time_tr_wt_pT3, exam_queuing_pT3, time_ex_wt_pT3
+    global rx_queuing_pT3, time_rx_wt_pT3, bed_queuing_pT3, time_bd_wt_pT3
+    global surg_queuing_pT3, time_sg_wt_pT3, time_in_path3
+    global pNeedingBed, pNeedingSurg, pNeedingBox, ttt3, unassistedPT3, cens3
+    
+    # ----------------------------------------------- T R I A G E ------------
+    
+    cens3 += 1
+    time_patientT3_entered_triage_queue = env.now
+    with triageBox.request() as req:
+        yield req
+        
+        time_patientT3_left_triage_queue = env.now
+        time_in_triage_queue_pT3 = time_patientT3_left_triage_queue - time_patientT3_entered_triage_queue
+        triage_queuing_pT3.append ( time_in_triage_queue_pT3 )
+        time_tr_wt_pT3.append ( env.now )
+        
+        sampled_triage_time = random.expovariate ( 1./mean_triage )
+        # sampled_triage_time = mean_triage
+        yield env.timeout ( sampled_triage_time )
+        
+    # --------------------------------------------- E X A M I N A T I O N -----
+    
+    # request and stay in examination box for evaluation and treatment
+    time_patientT3_entered_exam_queue = env.now
+    pNeedingBox.append ( env.now )
+    with examBox.request() as req:
+        yield req
+        
+        time_patientT3_left_exam_queue = env.now
+        # print ( env.now )
+        time_in_exam_queue_pT3 = time_patientT3_left_exam_queue - time_patientT3_entered_exam_queue
+        exam_queuing_pT3.append ( time_in_exam_queue_pT3 )
+        time_ex_wt_pT3.append ( env.now )
+        
+        sampled_exam_time = random.expovariate ( 1./mean_exam )
+        # sampled_exam_time = mean_exam
+        yield env.timeout ( sampled_exam_time )
+        
+    # ----------------------------------------------- I M A G I N G -----------
+
+        # imaging
+        time_patientT3_entered_rx_queue = env.now
+        with rxRoom.request() as req:
+            yield req
+            
+            time_patientT3_left_rx_queue = env.now
+            # print ( env.now )
+            time_in_rx_queue_pT3 = time_patientT3_left_rx_queue - time_patientT3_entered_rx_queue
+            rx_queuing_pT3.append ( time_in_rx_queue_pT3 )
+            time_rx_wt_pT3.append ( env.now )
+            
+            sampled_rx_time = random.expovariate ( 1./mean_rx )
+            # sampled_rx_time = mean_rx
+            yield env.timeout ( sampled_rx_time )
+        
+    # ------------------------------ S U R G E R Y  A N D  R E C O V E R Y ----
+
+    # request ensured bed for surgery recovery
+    time_patientT3_entered_bed_queue = env.now
+    pNeedingBed.append ( env.now )
+    with bed.request() as req:
+        yield req
+        
+        time_patientT3_left_bed_queue = env.now
+        time_in_bed_queue_pT3 = time_patientT3_left_bed_queue - time_patientT3_entered_bed_queue
+        bed_queuing_pT3.append ( time_in_bed_queue_pT3 )
+        time_bd_wt_pT3.append ( env.now )
+        
+        # request OR for surgery
+        time_patientT3_entered_surg_queue = env.now
+        pNeedingSurg.append ( env.now )
+        with OR.request() as req:
+            yield req
+            
+            time_patientT3_left_surg_queue = env.now  
+            time_in_surg_queue_pT3 = time_patientT3_left_surg_queue - time_patientT3_entered_surg_queue
+            surg_queuing_pT3.append ( time_in_surg_queue_pT3 )
+            time_sg_wt_pT3.append ( env.now )
+            
+            time_patientT3_entered_surg = env.now
+            time_to_treatm_pT3 = time_patientT3_entered_surg - time_patientT3_entered_triage_queue
+            ttt3.append ( time_to_treatm_pT3 )
+            if time_to_treatm_pT3 > max_ttt3:
+                unassistedPT3 +=1
+            
+            sampled_surg_time = random.expovariate ( 1./mean_surg )
+            # sampled_surg_time = mean_surg
+            yield env.timeout ( sampled_surg_time )
+        
+        sampled_hosp_time = random.expovariate ( 1./mean_hosp )
+        # sampled_hosp_time = mean_hosp
+        yield env.timeout ( sampled_hosp_time )
+
+    # ------------------------------ D I S P O S I T I O N --------------------
+        
+    cens3 -= 1
+    time_patientT3_leaves = env.now
+    time_in_system_pT3 = time_patientT3_leaves - time_patientT3_entered_triage_queue
+    time_in_path3.append ( time_in_system_pT3 )    
+
+# Path 4: SURGICAL FRACTURE (non-extremity) --> Intensive care treatment
+# PH + TR + EX + DS + OR + ICU + HOS + DIS
+def path_4 ( env, mean_triage, mean_exam, mean_rx, mean_surg, mean_hosp, mean_icu, 
+            triageBox, examBox, rxRoom, OR, ICU, bed, max_ttt4, p_id ):
+    
+    global triage_queuing_pT4, time_tr_wt_pT4, exam_queuing_pT4, time_ex_wt_pT4
+    global rx_queuing_pT4, time_rx_wt_pT4, surg_queuing_pT4
+    global time_sg_wt_pT4, icu_queuing_pT4, time_icu_wt_pT4
+    global bed2_queuing_pT4, time_bd2_wt_pT4, time_in_path4
+    global pNeedingIcu, pNeedingSurg, pNeedingBed2
+    global pNeedingBox, ttt4, unassistedPT4, cens4
+    
+    # ----------------------------------------------- T R I A G E ------------
+    
+    cens4 += 1
+    time_patientT4_entered_triage_queue = env.now
+    with triageBox.request() as req:
+        yield req
+        
+        time_patientT4_left_triage_queue = env.now
+        time_in_triage_queue_pT4 = time_patientT4_left_triage_queue - time_patientT4_entered_triage_queue
+        triage_queuing_pT4.append ( time_in_triage_queue_pT4 )
+        time_tr_wt_pT4.append ( env.now )
+        
+        sampled_triage_time = random.expovariate ( 1./mean_triage )
+        # sampled_triage_time = mean_triage
+        yield env.timeout ( sampled_triage_time )
+       
+    # --------------------------------------------- E X A M I N A T I O N -----
+    
+    time_patientT4_entered_exam_queue = env.now
+    pNeedingBox.append ( env.now )
+    with examBox.request() as req:
+        yield req
+        
+        time_patientT4_left_exam_queue = env.now
+        time_in_exam_queue_pT4 = time_patientT4_left_exam_queue - time_patientT4_entered_exam_queue
+        exam_queuing_pT4.append ( time_in_exam_queue_pT4 )
+        time_ex_wt_pT4.append ( env.now )
+        
+        sampled_exam_time = random.expovariate ( 1./mean_exam )
+        # sampled_exam_time = mean_exam
+        yield env.timeout ( sampled_exam_time )
+        
+    # ----------------------------------------------- I M A G I N G -----------
+
+        time_patientT4_entered_rx_queue = env.now
+        with rxRoom.request() as req:
+            yield req
+            
+            time_patientT4_left_rx_queue = env.now
+            time_in_rx_queue_pT4 = time_patientT4_left_rx_queue - time_patientT4_entered_rx_queue
+            rx_queuing_pT4.append ( time_in_rx_queue_pT4 )
+            time_rx_wt_pT4.append ( env.now )
+            
+            sampled_rx_time = random.expovariate ( 1./mean_rx )
+            # sampled_rx_time = mean_rx
+            yield env.timeout ( sampled_rx_time )
+        
+    # --------------------------------------- S U R G E R Y  A N D  I C U -----
+    
+    time_patientT4_entered_icu_queue = env.now
+    pNeedingIcu.append ( env.now )
+    with ICU.request() as req:
+        yield req
+            
+        time_patientT4_left_icu_queue = env.now        
+        time_in_icu_queue_pT4 = time_patientT4_left_icu_queue - time_patientT4_entered_icu_queue
+        icu_queuing_pT4.append ( time_in_icu_queue_pT4 )
+        time_icu_wt_pT4.append ( env.now )
+
+        # request OR for surgery
+        time_patientT4_entered_surg_queue = env.now
+        pNeedingSurg.append ( env.now )
+        with OR.request() as req:
+            yield req
+            
+            time_patientT4_left_surg_queue = env.now        
+            time_in_surg_queue_pT4 = time_patientT4_left_surg_queue - time_patientT4_entered_surg_queue
+            surg_queuing_pT4.append ( time_in_surg_queue_pT4 )
+            time_sg_wt_pT4.append ( env.now )
+            
+            time_patientT4_entered_surg = env.now
+            time_to_treatm_pT4 = time_patientT4_entered_surg - time_patientT4_entered_triage_queue
+            ttt4.append ( time_to_treatm_pT4 )
+            if time_to_treatm_pT4 > max_ttt4:
+                unassistedPT4 +=1
+                
+            sampled_surg_time = random.expovariate ( 1./mean_surg )
+            # sampled_surg_time = mean_surg
+            yield env.timeout ( sampled_surg_time )
+            
+        sampled_icu_time = random.expovariate ( 1./mean_icu )
+        # sampled_icu_time = mean_icu
+        yield env.timeout ( sampled_icu_time )
+        
+    # ----------------------------------------------- R E C O V E R Y ---------
+
+    time_patientT4_entered_bed2_queue = env.now
+    pNeedingBed2.append ( env.now )
+    with bed.request() as req:
+        yield req
+            
+        time_patientT4_left_bed2_queue = env.now
+        time_in_bed2_queue_pT4 = time_patientT4_left_bed2_queue - time_patientT4_entered_bed2_queue
+        bed2_queuing_pT4.append ( time_in_bed2_queue_pT4 )
+        time_bd2_wt_pT4.append ( env.now )
+        
+        sampled_hosp_time = random.expovariate ( 1./mean_hosp )
+        # sampled_hosp_time = mean_hosp
+        yield env.timeout ( sampled_hosp_time )
+
+    # ------------------------------ D I S P O S I T I O N --------------------    
+
+    cens4 -= 1
+    time_patientT4_leaves = env.now
+    time_in_system_pT4 = time_patientT4_leaves - time_patientT4_entered_triage_queue
+    time_in_path4.append ( time_in_system_pT4 )
+
+# Path 5: CRUSH SYNDROME --> Intensive care + dialysis
+# PH + TR + EX + DS + OR + ICU + DIAL + HOS + DIS
+def path_5 ( env, mean_triage, mean_exam, mean_lab, mean_surg, mean_hosp, mean_icu, 
+            mean_dial, triageBox, examBox, lab, OR, ICU, bed, dialMach, 
+            max_ttt5, p_id ):
+    
+    global triage_queuing_pT5, time_tr_wt_pT5, exam_queuing_pT5, lab_queuing_pT5
+    global time_lab_wt_pT5, icu_queuing_pT5, time_icu_wt_pT5, dial_queuing_pT5
+    global time_dial_wt_pT5, bed2_queuing_pT5, time_bd2_wt_pT5, time_in_path5
+    global pNeedingIcu, pNeedingBed2, pNeedingBox, ttt5, unassistedPT5, cens5
+    
+    # ----------------------------------------------- T R I A G E ------------
+    
+    cens5 += 1
+    time_patientT5_entered_triage_queue = env.now
+    with triageBox.request() as req:
+        yield req
+        
+        time_patientT5_left_triage_queue = env.now
+        time_in_triage_queue_pT5 = time_patientT5_left_triage_queue - time_patientT5_entered_triage_queue
+        triage_queuing_pT5.append ( time_in_triage_queue_pT5 )
+        time_tr_wt_pT5.append ( env.now )
+        
+        sampled_triage_time = random.expovariate ( 1./mean_triage )
+        # sampled_triage_time = mean_triage
+        yield env.timeout ( sampled_triage_time )
+       
+    # --------------------------------------------- E X A M I N A T I O N -----    
+    
+    time_patientT5_entered_exam_queue = env.now
+    pNeedingBox.append ( env.now )
+    with examBox.request() as req:
+        yield req
+        
+        time_patientT5_left_exam_queue = env.now
+        time_in_exam_queue_pT5 = time_patientT5_left_exam_queue - time_patientT5_entered_exam_queue
+        exam_queuing_pT5.append ( time_in_exam_queue_pT5 )
+        time_ex_wt_pT5.append ( env.now )
+                
+        sampled_exam_time = random.expovariate ( 1./mean_exam )
+        # sampled_exam_time = mean_exam
+        yield env.timeout ( sampled_exam_time )
+        
+    # ----------------------------------------------- I M A G I N G -----------    
+
+        time_patientT5_entered_lab_queue = env.now
+        with lab.request() as req:
+            yield req
+            
+            time_patientT5_left_lab_queue = env.now
+            time_in_lab_queue_pT5 = time_patientT5_left_lab_queue - time_patientT5_entered_lab_queue
+            lab_queuing_pT5.append ( time_in_lab_queue_pT5 )
+            time_lab_wt_pT5.append ( env.now )
+            
+            sampled_lab_time = random.expovariate ( 1./mean_lab )
+            # sampled_lab_time = mean_lab
+            yield env.timeout ( sampled_lab_time )
+        
+    # ---------------------------------------------- I C U --------------------    
+    
+    time_patientT5_entered_icu_queue = env.now
+    pNeedingIcu.append ( env.now )
+    with ICU.request() as req:
+        yield req
+            
+        time_patientT5_left_icu_queue = env.now        
+        time_in_icu_queue_pT5 = time_patientT5_left_icu_queue - time_patientT5_entered_icu_queue
+        icu_queuing_pT5.append ( time_in_icu_queue_pT5 )
+        time_icu_wt_pT5.append ( env.now )
+        
+        time_patientT5_entered_surg_queue = env.now
+        pNeedingSurg.append ( env.now )
+        with OR.request() as req:
+            yield req
+            
+            time_patientT5_left_surg_queue = env.now        
+            time_in_surg_queue_pT5 = time_patientT5_left_surg_queue - time_patientT5_entered_surg_queue
+            surg_queuing_pT5.append ( time_in_surg_queue_pT5 )
+            time_sg_wt_pT5.append ( env.now )
+        
+            time_patientT5_entered_surg = env.now
+            time_to_treatm_pT5 = time_patientT5_entered_surg - time_patientT5_entered_triage_queue
+            ttt5.append ( time_to_treatm_pT5 )
+            if time_to_treatm_pT5 > max_ttt5:
+                unassistedPT5 +=1
+
+            sampled_surg_time = random.expovariate ( 1./mean_surg )
+            # sampled_surg_time = mean_surg
+            yield env.timeout ( sampled_surg_time )
+
+        time_patientT5_entered_dial_queue = env.now
+        with dialMach.request() as req:
+            yield req
+            
+            time_patientT5_left_dial_queue = env.now        
+            time_in_dial_queue_pT5 = time_patientT5_left_dial_queue - time_patientT5_entered_dial_queue
+            dial_queuing_pT5.append ( time_in_dial_queue_pT5 )
+            time_dial_wt_pT5.append ( env.now )
+            
+            sampled_dial_time = random.expovariate ( 1./mean_dial )
+            # sampled_dial_time = mean_dial
+            yield env.timeout ( sampled_dial_time )
+            
+        sampled_icu_time = random.expovariate ( 1./mean_icu )
+        # sampled_icu_time = mean_icu
+        yield env.timeout ( sampled_icu_time )
+        
+    # ----------------------------------------------- R E C O V E R Y ---------
+
+    time_patientT5_entered_bed2_queue = env.now
+    pNeedingBed2.append ( env.now ) 
+    with bed.request() as req:
+        yield req
+            
+        time_patientT5_left_bed2_queue = env.now
+        time_in_bed2_queue_pT5 = time_patientT5_left_bed2_queue - time_patientT5_entered_bed2_queue
+        bed2_queuing_pT5.append ( time_in_bed2_queue_pT5 )
+        time_bd2_wt_pT5.append ( env.now )
+        
+        sampled_hosp_time = random.expovariate ( 1./mean_hosp )
+        # sampled_hosp_time = mean_hosp
+        yield env.timeout ( sampled_hosp_time )
+
+    # ------------------------------ D I S P O S I T I O N --------------------    
+
+    cens5 -= 1
+    time_patientT5_leaves = env.now
+    time_in_system_pT5 = time_patientT5_leaves - time_patientT5_entered_triage_queue
+    time_in_path5.append ( time_in_system_pT5 )    
+
+# Path 6: AMPUTATION --> resuscitation + surgical treatment + ICU
+# PH + RES + DS + OR + ICU + HOS + DIS
+def path_6 ( env, mean_res, mean_resRx, mean_surg, mean_icu, mean_hosp, resRoom, 
+            OR, ICU, bed, max_ttt6, p_id ):
+    
+    global res_queuing_pT6, time_res_wt_pT6, rx_queuing_pT6, time_rx_wt_pT6
+    global surg_queuing_pT6, time_sg_wt_pT6, icu_queuing_pT6
+    global time_icu_wt_pT6, bed2_queuing_pT6, time_bd2_wt_pT6, time_in_path6
+    global pNeedingIcu, pNeedingSurg, pNeedingBed2, ttt6, unassistedPT6, cens6
+    
+    # ---------------------------------------- R E S U S C I T A T I O N ------
+    
+    cens6 += 1
+    time_patientT6_entered_res_queue = env.now
+    with resRoom.request() as req:
+        yield req
+        
+        time_patientT6_left_res_queue = env.now
+        time_in_res_queue_pT6 = time_patientT6_left_res_queue - time_patientT6_entered_res_queue
+        res_queuing_pT6.append ( time_in_res_queue_pT6 )
+        time_res_wt_pT6.append ( env.now )
+        
+        sampled_res_time = random.expovariate ( 1./mean_res )
+        # sampled_res_time = mean_res
+        yield env.timeout ( sampled_res_time )
+        
+    # ----------------------------------------------- I M A G I N G -----------    
+
+        time_patientT6_entered_rx_queue = env.now
+        with rxMach.request() as req:
+            yield req
+            
+            time_patientT6_left_rx_queue = env.now
+            time_in_rx_queue_pT6 = time_patientT6_left_rx_queue - time_patientT6_entered_rx_queue
+            rx_queuing_pT6.append ( time_in_rx_queue_pT6 )
+            time_rx_wt_pT6.append ( env.now )
+            
+            sampled_rx_time = random.expovariate ( 1./mean_resRx )
+            # sampled_rx_time = mean_resRx
+            yield env.timeout ( sampled_rx_time )
+        
+    # --------------------------------------- S U R G E R Y  A N D  I C U -----
+
+    time_patientT6_entered_icu_queue = env.now
+    pNeedingIcu.append ( env.now )
+    with ICU.request() as req:
+        yield req
+            
+        time_patientT6_left_icu_queue = env.now        
+        time_in_icu_queue_pT6 = time_patientT6_left_icu_queue - time_patientT6_entered_icu_queue
+        icu_queuing_pT6.append ( time_in_icu_queue_pT6 )
+        time_icu_wt_pT6.append ( env.now )
+
+        # request OR for surgery
+        time_patientT6_entered_surg_queue = env.now
+        pNeedingSurg.append ( env.now )
+        with OR.request() as req:
+            yield req
+            
+            time_patientT6_left_surg_queue = env.now        
+            time_in_surg_queue_pT6 = time_patientT6_left_surg_queue - time_patientT6_entered_surg_queue
+            surg_queuing_pT6.append ( time_in_surg_queue_pT6 )
+            time_sg_wt_pT6.append ( env.now )
+            
+            time_patientT6_entered_surg = env.now
+            time_to_treatm_pT6 = time_patientT6_entered_surg - time_patientT6_entered_res_queue
+            ttt6.append ( time_to_treatm_pT6 )
+            if time_to_treatm_pT6 > max_ttt6:
+                unassistedPT6 +=1
+            
+            sampled_surg_time = random.expovariate ( 1./mean_surg )
+            # sampled_surg_time = mean_surg
+            yield env.timeout ( sampled_surg_time )
+            
+        sampled_icu_time = random.expovariate ( 1./mean_icu )
+        # sampled_icu_time = mean_icu
+        yield env.timeout ( sampled_icu_time )
+        
+    # ----------------------------------------------- R E C O V E R Y ---------
+
+    time_patientT6_entered_bed2_queue = env.now
+    pNeedingBed2.append ( env.now )
+    with bed.request() as req:
+        yield req
+            
+        time_patientT6_left_bed2_queue = env.now
+        time_in_bed2_queue_pT6 = time_patientT6_left_bed2_queue - time_patientT6_entered_bed2_queue
+        bed2_queuing_pT6.append ( time_in_bed2_queue_pT6 )
+        time_bd2_wt_pT6.append ( env.now )
+                    
+        sampled_hosp_time = random.expovariate ( 1./mean_hosp )
+        # sampled_hosp_time = mean_hosp
+        yield env.timeout ( sampled_hosp_time )
+
+    # ------------------------------ D I S P O S I T I O N --------------------    
+
+    cens6 -= 1
+    time_patientT6_leaves = env.now
+    time_in_system_pT6 = time_patientT6_leaves - time_patientT6_entered_res_queue
+    time_in_path6.append ( time_in_system_pT6 )    
+   
+    
+# Path 7: AMPUTATION --> examination + hemodynamics + ICU
+# PH + TR + EX + CL + ICU + HOS + DIS
+def path_7 ( env, mean_triage, mean_exam, mean_hemSurg, mean_icu, mean_hosp,
+            triageBox, examBox, catLab, ICU, bed, max_ttt7, p_id ):
+    
+    global triage_queuing_pT7, time_tr_wt_pT7, exam_queuing_pT7,time_ex_wt_pT7
+    global icu_queuing_pT7, time_icu_wt_pT7, hemSurg_queuing_pT7
+    global time_hemSg_wt_pT7, bed2_queuing_pT7, time_bd2_wt_pT7, time_in_path7
+    global pNeedingIcu, pNeedingBed2, pNeedingBox, unassistedPT7, ttt7, cens7
+    
+    # ----------------------------------------------- T R I A G E ------------
+    
+    cens7 += 1
+    time_patientT7_entered_triage_queue = env.now
+    with triageBox.request() as req:
+        yield req
+        
+        time_patientT7_left_triage_queue = env.now
+        time_in_triage_queue_pT7 = time_patientT7_left_triage_queue - time_patientT7_entered_triage_queue
+        triage_queuing_pT7.append ( time_in_triage_queue_pT7 )
+        time_tr_wt_pT7.append ( env.now )
+        
+        sampled_triage_time = random.expovariate ( 1./mean_triage )
+        # sampled_triage_time = mean_triage
+        yield env.timeout ( sampled_triage_time )
+       
+    # --------------------------------------------- E X A M I N A T I O N -----
+    
+    time_patientT7_entered_exam_queue = env.now
+    pNeedingBox.append ( env.now )
+    with examBox.request() as req:
+        yield req
+        
+        time_patientT7_left_exam_queue = env.now
+        time_in_exam_queue_pT7 = time_patientT7_left_exam_queue - time_patientT7_entered_exam_queue
+        exam_queuing_pT7.append ( time_in_exam_queue_pT7 )
+        time_ex_wt_pT7.append ( env.now )
+        
+        sampled_exam_time = random.expovariate ( 1./mean_exam )
+        # sampled_exam_time = mean_exam
+        yield env.timeout ( sampled_exam_time )
+        
+    # ---------------------------------------- S U R G E R Y  A N D  I C U ----
+    
+    # request ensured ICU for hemodynamic surgery recovery
+    time_patientT7_entered_icu_queue = env.now
+    pNeedingIcu.append ( env.now )
+    with ICU.request() as req:
+        yield req
+            
+        time_patientT7_left_icu_queue = env.now        
+        time_in_icu_queue_pT7 = time_patientT7_left_icu_queue - time_patientT7_entered_icu_queue
+        icu_queuing_pT7.append ( time_in_icu_queue_pT7 )
+        time_icu_wt_pT7.append ( env.now )
+
+        # request catLab for hemodynamics surgery
+        time_patientT7_entered_hemSurg_queue = env.now
+        with catLab.request() as req:
+            yield req
+            
+            time_patientT7_left_hemSurg_queue = env.now        
+            time_in_hemSurg_queue_pT7 = time_patientT7_left_hemSurg_queue - time_patientT7_entered_hemSurg_queue
+            hemSurg_queuing_pT7.append ( time_in_hemSurg_queue_pT7 )
+            time_hemSg_wt_pT7.append ( env.now )
+            
+            time_patientT7_entered_surg = env.now
+            time_to_treatm_pT7 = time_patientT7_entered_surg - time_patientT7_entered_triage_queue
+            ttt7.append ( time_to_treatm_pT7 )
+            if time_to_treatm_pT7 > max_ttt7:
+                unassistedPT7 +=1
+            
+            sampled_hemSurg_time = random.expovariate ( 1./mean_hemSurg )
+            # sampled_hemSurg_time = mean_hemSurg
+            yield env.timeout ( sampled_hemSurg_time )
+        
+        sampled_icu_time = random.expovariate ( 1./mean_icu )
+        # sampled_icu_time = mean_icu
+        yield env.timeout ( sampled_icu_time )
+        
+    # ----------------------------------------------- R E C O V E R Y ---------
+
+    time_patientT7_entered_bed2_queue = env.now
+    pNeedingBed2.append ( env.now )
+    with bed.request() as req:
+        yield req
+            
+        time_patientT7_left_bed2_queue = env.now
+        time_in_bed2_queue_pT7 = time_patientT7_left_bed2_queue - time_patientT7_entered_bed2_queue
+        bed2_queuing_pT7.append ( time_in_bed2_queue_pT7 )
+        time_bd2_wt_pT7.append ( env.now )
+        
+        sampled_hosp_time = random.expovariate ( 1./mean_hosp )
+        # sampled_hosp_time = mean_hosp
+        yield env.timeout ( sampled_hosp_time )
+
+    # ------------------------------ D I S P O S I T I O N --------------------    
+
+    cens7 -= 1
+    time_patientT7_leaves = env.now
+    time_in_system_pT7 = time_patientT7_leaves - time_patientT7_entered_triage_queue
+    time_in_path7.append ( time_in_system_pT7 )
+        
+
+# -----------------------------------------------------------------------------
+#                      S I M U L A T I O N   S E T   U P 
+# -----------------------------------------------------------------------------
+
+
+# ------------------------------------------------ general params  ------------
+
+day = 1440. # min
+nDays = 14
+timeHorizon = day*nDays
+nSim = 100
+nPat = 500.
+warm_up = 0.
+patient_types = numpy.array ( [1,2,3,4,5,6,7] )
+ptp = [ 0.10,0.05,0.55,0.15,0.05,0.05,0.05 ]
+npatMeanWT = 1
+npatMeanLOS = 1
+npatMeanTTT = 1
+
+resRoomHLF = 4 # 2 rooms with 2 stretchers each
+exBoxHLF = 15 # 9 boxes with 13 stretchers + 1 trauma room with 2 stretchers
+xRoomHLF = 1
+XMachHLF = 1
+ctRoomHLF = 1
+usRoomHLF = 1
+cArcRoomHLF = 2
+orHLF = 17 # plus 4 more birth wardsf
+bedsHLF = 391
+bedOccupRate = 0.74
+icusHLF = 60
+icuOccupRate = 0.16
+
+resR = [2,2,2]
+trBox = [1,1,1]
+exBox = [7,15,22]
+xRoom = [1,1,1]
+xMach = [1,1,1]
+labs = [1,1,1]
+dials = [1,1,1]
+cats = [1,1,1]
+
+ORs = [int(1.0*orHLF),int(1.0*orHLF),int(1.0*orHLF)]
+avBedsHLF = int ( bedsHLF * ( 1. - bedOccupRate ) )
+beds = [int(1.0*avBedsHLF),int(1.0*avBedsHLF),int(1.0*avBedsHLF)]
+avIcusHLF = int ( icusHLF * ( 1. - icuOccupRate ) )
+icus =[int(1.0*avIcusHLF),int(1.0*avIcusHLF),int(1.0*avIcusHLF)]
+
+varName = 'exam. rooms'
+varNameShort = 'ex. rooms'
+var = exBox
+varNameLeg = 'ERs'
+
+
+# ------------------------------------------------ arrival pattern ------------
+
+pattern_day1 = 0.50
+pattern_day2 = 0.25
+pattern_day3 = 0.15
+pattern_dayS = 0.10
+
+m = -pattern_dayS/6.
+h4 = m*((4.-4.)-3.)
+h5 = m*((5.-4.)-3.)
+h6 = m*((6.-4.)-3.)
+h7 = m*((7.-4.)-3.)
+
+lambPreEQ = 0.001 # pat/min
+eqTime = 0. # min
+lamb1 = nPat*pattern_day1/day  # pat/min
+lamb2 = nPat*pattern_day2/day
+lamb3 = nPat*pattern_day3/day
+lamb4 = nPat*h4/day
+lamb5 = nPat*h5/day
+lamb6 = nPat*h6/day
+
+patRate1 = nPat*pattern_day1/24.
+patRate2 = nPat*pattern_day2/24.
+patRate3 = nPat*pattern_day3/24.
+patRate4 = nPat*h4/24.
+patRate5 = nPat*h5/24.
+patRate6 = nPat*h6/24.
+patRate7 = nPat*h7/24.
+
+ed_inter1 = day/(nPat*pattern_day1)
+ed_inter2 = day/(nPat*(pattern_day1-pattern_day2))
+ed_inter3 = day/(nPat*(pattern_day2-pattern_day3))
+ed_inter4 = day/(nPat*(pattern_day3-h4))
+ed_interS = 3.*day/(nPat*pattern_dayS)
+
+# ----------------------------------------------- process params --------------
+
+mean_res = 25.8
+mean_triage = 1.23
+mean_exam = 17.2
+mean_treatP1 = 27.2 # 9.4 (first-aid treatment)
+mean_orthopTreat = 27.2
+mean_rx = 10.5
+mean_lab = 10.5
+mean_resRx = 10.5 # shuold be less?
+
+mean_surg = 22.4
+mean_hemSurg = 22.4
+mean_dial = 3.*60
+
+mean_hosp = 8.8*day
+mean_icu = 9.*day
+
+mean_boarding = 80.
+
+nom_los_pT1 = mean_triage + mean_exam + mean_treatP1
+nom_los_pT2 = mean_triage + mean_exam + mean_rx + mean_orthopTreat
+nom_los_pT3 = mean_triage + mean_exam + mean_rx + mean_surg + mean_hosp
+nom_los_pT4 = mean_triage + mean_exam + mean_rx + mean_surg + mean_icu + mean_hosp
+nom_los_pT5 = mean_triage + mean_exam + mean_lab + mean_dial + mean_icu + mean_hosp
+nom_los_pT6 = mean_res + mean_resRx + mean_surg + mean_icu + mean_hosp
+nom_los_pT7 = mean_triage + mean_exam + mean_hemSurg + mean_icu + mean_hosp
+
+nom_ttt_pT1 = mean_triage + mean_exam
+nom_ttt_pT2 = mean_triage + mean_exam + mean_rx
+nom_ttt_pT3 = mean_triage + mean_exam + mean_rx + mean_boarding
+nom_ttt_pT4 = mean_triage + mean_exam + mean_rx + mean_boarding
+nom_ttt_pT5 = mean_triage + mean_exam + mean_rx + mean_boarding
+nom_ttt_pT6 = mean_boarding
+nom_ttt_pT7 = mean_triage + mean_exam + mean_boarding
+
+max_ttt12 = 4.*60
+max_ttt3 = max_ttt12 + mean_boarding
+max_ttt4 = max_ttt3
+max_ttt5 = max_ttt3
+max_ttt6 = max_ttt3
+max_ttt7 = max_ttt3
+
+# -------------------------------------------------------- outputs ------------
+
+pid = []
+arrivalTime = []
+ptype = []
+arrivals = []
+pNeedingBox = []
+pNeedingSurg = []
+pNeedingBed = []
+pNeedingIcu = []
+pNeedingBed2 = []
+
+# 3D lists - C A J A S
+# ---------------------
+res_queS = []
+tr_queS = []
+ex_queS = []
+rx_queS = []
+rxMach_queS = []
+lab_queS = []
+or_queS = []
+bed_queS = []
+icu_queS = []
+dial_queS = []
+hemSg_queS = []
+    
+maxWT_ex_pT1 = []
+maxWT_ex_pT2 = []
+maxWT_bd_pT3 = []
+maxWT_icu_pT4 = []
+maxWT_sg_pT3 = []
+
+los_pT1S = []
+los_pT2S = []
+los_pT3S = []
+los_pT4S = []
+los_pT5S = []
+los_pT6S = []
+los_pT7S = []
+
+ttt_pT1S = []
+ttt_pT2S = []
+ttt_pT3S = []
+ttt_pT4S = []
+ttt_pT5S = []
+ttt_pT6S = []
+ttt_pT7S = []
+
+uAS_pT1S = []
+uAS_pT2S = []
+uAS_pT3S = []
+uAS_pT4S = []
+uAS_pT5S = []
+uAS_pT6S = []
+uAS_pT7S = []
+
+pT1_cumS = []
+pT2_cumS = []
+pT3_cumS = []
+pT4_cumS = []
+pT5_cumS = []
+pT6_cumS = []
+pT7_cumS = []
+
+census1 = []
+census2 = []
+census3 = []
+census4 = []
+census5 = []
+census6 = []
+census7 = []
+
+uAS1_ratioS = []
+uAS2_ratioS = []
+uAS3_ratioS = []
+uAS4_ratioS = []
+uAS5_ratioS = []
+uAS6_ratioS = []
+uAS7_ratioS = []
+
+maxTTT_pT1 = []
+maxTTT_pT2 = []
+maxTTT_pT3 = []
+maxTTT_pT4 = []
+maxTTT_pT5 = []
+maxTTT_pT6 = []
+maxTTT_pT7 = []
+
+# ---------------------
+
+simPTprobabS = []
+
+nRes = max( len(resR),len(trBox),len(exBox),len(xRoom),len(xMach),len(labs),
+            len(ORs),len(beds),len(icus),len(dials),len(cats) )
+
+for k in range ( 1 ):
+    
+    print ( 'resource %i' %(k+1) )
+    
+    # 2D lists - T A R J E T A S
+    # ---------------------------
+    res_que = []
+    tr_que = []
+    ex_que = []
+    rx_que = []
+    rxMach_que = []
+    lab_que = []
+    or_que = []
+    bed_que = []
+    icu_que = []
+    dial_que = []
+    hemSg_que = []
+
+    maxWt_ex_pT1 = []
+    maxWt_ex_pT2 = []
+    maxWt_bd_pT3 = []
+    maxWt_icu_pT4 = []
+    maxWt_sg_pT3 = []
+    
+    los_pT1 = []
+    los_pT2 = []
+    los_pT3 = []
+    los_pT4 = []
+    los_pT5 = []
+    los_pT6 = []
+    los_pT7 = []
+    
+    ttt_pT1 = []
+    ttt_pT2 = []
+    ttt_pT3 = []
+    ttt_pT4 = []
+    ttt_pT5 = []
+    ttt_pT6 = []
+    ttt_pT7 = []
+    
+    uAS_pT1 = []
+    uAS_pT2 = []
+    uAS_pT3 = []
+    uAS_pT4 = []
+    uAS_pT5 = []
+    uAS_pT6 = []
+    uAS_pT7 = []
+    
+    pT1_cumN = []
+    pT2_cumN = []
+    pT3_cumN = []
+    pT4_cumN = []
+    pT5_cumN = []
+    pT6_cumN = []
+    pT7_cumN = []
+
+    pT1_cenS = []
+    pT2_cenS = []
+    pT3_cenS = []
+    pT4_cenS = []
+    pT5_cenS = []
+    pT6_cenS = []
+    pT7_cenS = []
+    
+    uAS1_ratioN = []
+    uAS2_ratioN = []
+    uAS3_ratioN = []
+    uAS4_ratioN = []
+    uAS5_ratioN = []
+    uAS6_ratioN = []
+    uAS7_ratioN = []
+    
+    maxTtt_pT1 = []
+    maxTtt_pT2 = []
+    maxTtt_pT3 = []
+    maxTtt_pT4 = []
+    maxTtt_pT5 = []
+    maxTtt_pT6 = []
+    maxTtt_pT7 = []
+    
+    if k == 1:
+        mean_maxTtt_pT1 = []
+        mean_maxTtt_pT2 = []
+        mean_maxTtt_pT3 = []
+        mean_maxTtt_pT4 = []
+        mean_maxTtt_pT5 = []
+        mean_maxTtt_pT6 = []
+        mean_maxTtt_pT7 = []
+        rec_nSim = []
+        
+    for i in range ( nSim ) :
+
+        # set up
+        env = simpy.Environment ( )        
+
+        # resources
+        resRoom = simpy.Resource ( env, capacity = resR[k] )
+        triageBox = simpy.Resource ( env, capacity = trBox[k] )
+        examBox = simpy.Resource ( env, capacity = exBox[k] )
+        rxRoom = simpy.Resource ( env, capacity = xRoom[k] )
+        rxMach = simpy.Resource ( env, capacity = xMach[k] )
+        lab = simpy.Resource ( env, capacity = labs[k] )
+        OR = simpy.Resource ( env, capacity = ORs[k] )
+        bed = simpy.Resource ( env, capacity = beds[k] )
+        # bed = simpy.Resource ( env, capacity = bedOR_ratio*nOR )
+        ICU = simpy.Resource ( env, capacity = icus[k] )
+        dialMach = simpy.Resource ( env, capacity = dials[k] )
+        catLab = simpy.Resource ( env, capacity = cats[k] )
+
+        # ---------------------------------------- time monitor in minutes ----
+        
+        # 1D lists to store time-tracking variables (constant dt)
+        time_min = []
+        res_que_len = []
+        tr_que_len = []
+        ex_que_len = []
+        rx_que_len = []
+        rxMach_que_len = []
+        lab_que_len = []
+        or_que_len = []
+        bed_que_len = []
+        icu_que_len = []
+        dial_que_len = []
+        hemSg_que_len = []
+        
+        # patient type dependent ones:    
+        # every run storage:    
+        
+        # patient type 1
+        m_wt_tr_5p_pT1 = [] 
+        m_wt_tr_pT1 = [] # mean of all recorded waits
+        m_wt_ex_5p_pT1 = []
+        m_wt_ex_pT1 = []
+        
+        # patient type 2
+        m_wt_tr_5p_pT2 = []
+        m_wt_tr_pT2 = []
+        m_wt_ex_5p_pT2 = []
+        m_wt_ex_pT2 = []
+        m_wt_rx_5p_pT2 = []
+        m_wt_rx_pT2 = []
+        
+        # patient type 3
+        m_wt_tr_5p_pT3 = []
+        m_wt_tr_pT3 = []
+        m_wt_ex_5p_pT3 = []
+        m_wt_ex_pT3 = []
+        m_wt_rx_5p_pT3 = []
+        m_wt_rx_pT3 = []
+        m_wt_bd_5p_pT3 = []
+        m_wt_bd_pT3 = []
+        m_wt_sg_5p_pT3 = []
+        m_wt_sg_pT3 = []
+        
+        # patient type 4
+        m_wt_tr_5p_pT4 = []
+        m_wt_tr_pT4 = []
+        m_wt_ex_5p_pT4 = []
+        m_wt_ex_pT4 = []
+        m_wt_rx_5p_pT4 = []
+        m_wt_rx_pT4 = []
+        m_wt_sg_5p_pT4 = []
+        m_wt_sg_pT4 = []
+        m_wt_icu_5p_pT4 = []
+        m_wt_icu_pT4 = []
+        m_wt_bd2_5p_pT4 = []
+        m_wt_bd2_pT4 = []
+        
+        # patient type 5
+        m_wt_tr_5p_pT5 = []
+        m_wt_tr_pT5 = []
+        m_wt_ex_5p_pT5 = []
+        m_wt_ex_pT5 = []
+        m_wt_lab_5p_pT5 = []
+        m_wt_lab_pT5 = []
+        m_wt_bd_5p_pT5 = []
+        m_wt_bd_pT5 = []
+        m_wt_sg_5p_pT5 = []
+        m_wt_sg_pT5 = []
+        m_wt_icu_5p_pT5 = []
+        m_wt_icu_pT5 = []
+        m_wt_dial_5p_pT5 = []
+        m_wt_dial_pT5 = []
+        m_wt_bd2_5p_pT5 = []
+        m_wt_bd2_pT5 = []
+
+        # patient type 6
+        m_wt_res_5p_pT6 = []
+        m_wt_res_pT6 = []
+        m_wt_rx_5p_pT6 = []
+        m_wt_rx_pT6 = []
+        m_wt_bd_5p_pT6 = []
+        m_wt_bd_pT6 = []
+        m_wt_sg_5p_pT6 = []
+        m_wt_sg_pT6 = []
+        m_wt_icu_5p_pT6 = []
+        m_wt_icu_pT6 = []
+        m_wt_bd2_5p_pT6 = []
+        m_wt_bd2_pT6 = []
+        
+        # patient type 7
+        m_wt_tr_5p_pT7 = []
+        m_wt_tr_pT7 = []
+        m_wt_ex_5p_pT7 = []
+        m_wt_ex_pT7 = []
+        m_wt_bd_5p_pT7 = []
+        m_wt_bd_pT7 = []
+        m_wt_hemSg_5p_pT7 = []
+        m_wt_hemSg_pT7 = []
+        m_wt_icu_5p_pT7 = []
+        m_wt_icu_pT7 = []
+        m_wt_bd2_5p_pT7 = []
+        m_wt_bd2_pT7 = []
+        
+        # overall system outputs
+        m_los_5p_pT1 = []
+        m_los_5p_pT2 = []
+        m_los_5p_pT3 = []
+        m_los_5p_pT4 = []
+        m_los_5p_pT5 = []
+        m_los_5p_pT6 = []
+        m_los_5p_pT7 = []
+        
+        m_ttt_5p_pT1 = []
+        m_ttt_5p_pT2 = []
+        m_ttt_5p_pT3 = []
+        m_ttt_5p_pT4 = []
+        m_ttt_5p_pT5 = []
+        m_ttt_5p_pT6 = []
+        m_ttt_5p_pT7 = []
+        
+        m_uAS_5p_pT1 = []
+        m_uAS_5p_pT2 = []
+        m_uAS_5p_pT3 = []
+        m_uAS_5p_pT4 = []
+        m_uAS_5p_pT5 = []
+        m_uAS_5p_pT6 = []
+        m_uAS_5p_pT7 = []
+        
+        pT1_cum = []
+        pT2_cum = []
+        pT3_cum = []
+        pT4_cum = []
+        pT5_cum = []
+        pT6_cum = []
+        pT7_cum = []
+
+        pT1_cens = []
+        pT2_cens = []
+        pT3_cens = []
+        pT4_cens = []
+        pT5_cens = []
+        pT6_cens = []
+        pT7_cens = []
+        
+        uAS1_ratio = []
+        uAS2_ratio = []
+        uAS3_ratio = []
+        uAS4_ratio = []
+        uAS5_ratio = []
+        uAS6_ratio = []
+        uAS7_ratio = []
+        
+       
+        # ------------------------------------ output storing (every run) -----
+ 
+        # storing lists for WTs
+        
+        triage_queuing_pT1 = []
+        time_tr_wt_pT1 = []
+        exam_queuing_pT1 = []
+        time_ex_wt_pT1 = []
+        
+        triage_queuing_pT2 = []
+        time_tr_wt_pT2 = []
+        exam_queuing_pT2 = []
+        time_ex_wt_pT2 = []
+        rx_queuing_pT2 = []
+        time_rx_wt_pT2 = []
+        
+        triage_queuing_pT3 = []
+        time_tr_wt_pT3 = []
+        exam_queuing_pT3 = []
+        time_ex_wt_pT3 = []
+        rx_queuing_pT3 = []
+        time_rx_wt_pT3 = []
+        bed_queuing_pT3 = []
+        time_bd_wt_pT3 = []
+        surg_queuing_pT3 = []
+        time_sg_wt_pT3 = []
+        triage_queuing_pT4 = []
+        time_tr_wt_pT4 = []
+        
+        exam_queuing_pT4 = []
+        time_ex_wt_pT4 = []
+        rx_queuing_pT4 = []
+        time_rx_wt_pT4 = []
+        surg_queuing_pT4 = []
+        time_sg_wt_pT4 = []
+        icu_queuing_pT4 = []
+        time_icu_wt_pT4 = []
+        bed2_queuing_pT4 = []
+        time_bd2_wt_pT4 = []
+        
+        triage_queuing_pT5 = []
+        time_tr_wt_pT5 = []
+        exam_queuing_pT5 = []
+        time_ex_wt_pT5 = []
+        lab_queuing_pT5 = []
+        time_lab_wt_pT5 = []
+        bed_queuing_pT5 = []
+        time_bd_wt_pT5 = []
+        surg_queuing_pT5 = []
+        time_sg_wt_pT5 = []
+        icu_queuing_pT5 = []
+        time_icu_wt_pT5 = []
+        dial_queuing_pT5 = []
+        time_dial_wt_pT5 = []
+        bed2_queuing_pT5 = []
+        time_bd2_wt_pT5 = []
+        
+        res_queuing_pT6 = []
+        time_res_wt_pT6 = []
+        rx_queuing_pT6 = []
+        time_rx_wt_pT6 = []
+        bed_queuing_pT6 = []
+        time_bd_wt_pT6 = []
+        surg_queuing_pT6 = []
+        time_sg_wt_pT6 = []
+        icu_queuing_pT6 = []
+        time_icu_wt_pT6 = []
+        bed2_queuing_pT6 = []
+        time_bd2_wt_pT6 = []
+
+        triage_queuing_pT7 = []
+        time_tr_wt_pT7 = []
+        exam_queuing_pT7 = []
+        time_ex_wt_pT7 = []
+        bed_queuing_pT7 = []
+        time_bd_wt_pT7 = []
+        hemSurg_queuing_pT7 = []
+        time_hemSg_wt_pT7 = []
+        icu_queuing_pT7 = []
+        time_icu_wt_pT7 = []
+        bed2_queuing_pT7 = []
+        time_bd2_wt_pT7 = []
+        
+        pT1 = []
+        pT2 = []
+        pT3 = []
+        pT4 = []
+        pT5 = []
+        pT6 = []
+        pT7 = []
+        
+        time_in_path1 = []
+        time_in_path2 = []
+        time_in_path3 = []
+        time_in_path4 = []
+        time_in_path5 = []
+        time_in_path6 = []
+        time_in_path7 = []
+        
+        ttt1 = []
+        ttt2 = []
+        ttt3 = []
+        ttt4 = []
+        ttt5 = []
+        ttt6 = []
+        ttt7 = []
+        
+        unassistedPT1 = 0
+        unassistedPT2 = 0
+        unassistedPT3 = 0
+        unassistedPT4 = 0
+        unassistedPT5 = 0
+        unassistedPT6 = 0
+        unassistedPT7 = 0
+
+        cens1 = 0
+        cens2 = 0
+        cens3 = 0
+        cens4 = 0
+        cens5 = 0
+        cens6 = 0
+        cens7 = 0
+
+        # ----------------------------------------------  S E T   U P  --------
+        
+        # start arrivals generator
+        env.process ( patient_generator_ed ( env ) )    
+        
+        # start monitor for minutes
+        env.process ( monitor_minutes ( env ) )
+        
+        # # start monitor for hours
+        # env.process ( monitor_hours ( env ) )
+        
+        # run simulation
+        env.run ( until = timeHorizon )
+        
+        # print ( 'Iter %i , resource %i' %(i+1,k+1) )
+        # print ( '%i patients arrived' %(npT1+npT2+npT3+npT4+npT5+npT6+npT7) )
+        
+        simPT = [ npT1, npT2, npT3, npT4, npT5, npT6, npT7 ]
+        strFormat = len(simPT) * "{:.0f} "
+        simPT1 = strFormat.format(*simPT)
+        # print ('Number of patients by type:', simPT1 )
+        
+        simPTprobab = [ npT1/nPat, npT2/nPat, npT3/nPat, npT4/nPat, npT5/nPat, npT6/nPat, npT7/nPat ]
+        strFormat1 = len(simPTprobab) * "{:.0%} "
+        simPTprobab1 = strFormat1.format(*simPTprobab)
+        # print ( 'Patient distribution:', simPTprobab1 )
+
+        res_que.append ( res_que_len )
+        tr_que.append ( tr_que_len )
+        ex_que.append ( ex_que_len )
+        rx_que.append ( rx_que_len )
+        rxMach_que.append ( rxMach_que_len )
+        lab_que.append ( lab_que_len )
+        or_que.append ( or_que_len )
+        bed_que.append ( bed_que_len )
+        icu_que.append ( icu_que_len )
+        dial_que.append ( dial_que_len )
+        hemSg_que.append ( hemSg_que_len )
+
+        maxWt_ex_pT1.append ( numpy.nanmax( m_wt_ex_5p_pT1 ) )
+        maxWt_ex_pT2.append ( numpy.nanmax( m_wt_ex_5p_pT2 ) )
+        maxWt_bd_pT3.append ( numpy.nanmax( m_wt_bd_5p_pT3 ) )
+        maxWt_icu_pT4.append ( numpy.nanmax( m_wt_icu_5p_pT4 ) )
+        maxWt_sg_pT3.append ( numpy.nanmax( m_wt_sg_5p_pT3 ) )
+        
+        los_pT1.append ( m_los_5p_pT1 )
+        los_pT2.append ( m_los_5p_pT2 )
+        los_pT3.append ( m_los_5p_pT3 )
+        los_pT4.append ( m_los_5p_pT4 )
+        los_pT5.append ( m_los_5p_pT5 )
+        los_pT6.append ( m_los_5p_pT6 )
+        los_pT7.append ( m_los_5p_pT7 )
+        
+        ttt_pT1.append ( m_ttt_5p_pT1 )
+        ttt_pT2.append ( m_ttt_5p_pT2 )
+        ttt_pT3.append ( m_ttt_5p_pT3 )
+        ttt_pT4.append ( m_ttt_5p_pT4 )
+        ttt_pT5.append ( m_ttt_5p_pT5 )
+        ttt_pT6.append ( m_ttt_5p_pT6 )
+        ttt_pT7.append ( m_ttt_5p_pT7 )
+        
+        uAS_pT1.append ( m_uAS_5p_pT1 )
+        uAS_pT2.append ( m_uAS_5p_pT2 )
+        uAS_pT3.append ( m_uAS_5p_pT3 )
+        uAS_pT4.append ( m_uAS_5p_pT4 )
+        uAS_pT5.append ( m_uAS_5p_pT5 )
+        uAS_pT6.append ( m_uAS_5p_pT6 )
+        uAS_pT7.append ( m_uAS_5p_pT7 )
+        
+        pT1_cumN.append ( pT1_cum )
+        pT2_cumN.append ( pT2_cum )
+        pT3_cumN.append ( pT3_cum )
+        pT4_cumN.append ( pT4_cum )
+        pT5_cumN.append ( pT5_cum )
+        pT6_cumN.append ( pT6_cum )
+        pT7_cumN.append ( pT7_cum )
+    
+        pT1_cenS.append ( pT1_cens )
+        pT2_cenS.append ( pT2_cens )
+        pT3_cenS.append ( pT3_cens )
+        pT4_cenS.append ( pT4_cens )
+        pT5_cenS.append ( pT5_cens )
+        pT6_cenS.append ( pT6_cens )
+        pT7_cenS.append ( pT7_cens )
+        
+        uAS1_ratioN.append ( uAS1_ratio )
+        uAS2_ratioN.append ( uAS2_ratio )
+        uAS3_ratioN.append ( uAS3_ratio )
+        uAS4_ratioN.append ( uAS4_ratio )
+        uAS5_ratioN.append ( uAS5_ratio )
+        uAS6_ratioN.append ( uAS6_ratio )
+        uAS7_ratioN.append ( uAS7_ratio )
+        
+        maxTtt_pT1.append ( numpy.nanmax( m_ttt_5p_pT1 ) )
+        maxTtt_pT2.append ( numpy.nanmax( m_ttt_5p_pT2 ) )
+        maxTtt_pT3.append ( numpy.nanmax( m_ttt_5p_pT3 ) )
+        maxTtt_pT4.append ( numpy.nanmax( m_ttt_5p_pT4 ) )
+        maxTtt_pT5.append ( numpy.nanmax( m_ttt_5p_pT5 ) )
+        maxTtt_pT6.append ( numpy.nanmax( m_ttt_5p_pT6 ) )
+        maxTtt_pT7.append ( numpy.nanmax( m_ttt_5p_pT7 ) )
+        
+        if k == 1:
+            mean_maxTtt_pT1.append ( numpy.mean( maxTtt_pT1 ) )
+            mean_maxTtt_pT2.append ( numpy.mean( maxTtt_pT2 ) )
+            mean_maxTtt_pT3.append ( numpy.mean( maxTtt_pT3 ) )
+            mean_maxTtt_pT4.append ( numpy.mean( maxTtt_pT4 ) )
+            mean_maxTtt_pT5.append ( numpy.mean( maxTtt_pT5 ) )
+            mean_maxTtt_pT6.append ( numpy.mean( maxTtt_pT6 ) )
+            mean_maxTtt_pT7.append ( numpy.mean( maxTtt_pT7 ) )
+            rec_nSim.append ( len ( maxTtt_pT1 ) )
+    
+    simPTprobabS.append ( simPTprobab )
+    
+    res_queS.append ( res_que )
+    tr_queS.append ( tr_que )
+    ex_queS.append ( ex_que )
+    rx_queS.append ( rx_que )
+    rxMach_queS.append ( rxMach_que )
+    lab_queS.append ( lab_que )
+    or_queS.append ( or_que )
+    bed_queS.append ( bed_que )
+    icu_queS.append ( icu_que )
+    dial_queS.append ( dial_que )
+    hemSg_queS.append ( hemSg_que )
+    
+    maxWT_ex_pT1.append ( maxWt_ex_pT1 )
+    maxWT_ex_pT2.append ( maxWt_ex_pT1 )
+    maxWT_bd_pT3.append ( maxWt_bd_pT3 )
+    maxWT_icu_pT4.append ( maxWt_icu_pT4 )
+    maxWT_sg_pT3.append ( maxWt_sg_pT3 )
+    
+    los_pT1S.append ( los_pT1 )
+    los_pT2S.append ( los_pT2 )
+    los_pT3S.append ( los_pT3 )
+    los_pT4S.append ( los_pT4 )
+    los_pT5S.append ( los_pT5 )
+    los_pT6S.append ( los_pT6 )
+    los_pT7S.append ( los_pT7 )
+    
+    ttt_pT1S.append ( ttt_pT1 )
+    ttt_pT2S.append ( ttt_pT2 )
+    ttt_pT3S.append ( ttt_pT3 )
+    ttt_pT4S.append ( ttt_pT4 )
+    ttt_pT5S.append ( ttt_pT5 )
+    ttt_pT6S.append ( ttt_pT6 )
+    ttt_pT7S.append ( ttt_pT7 )
+    
+    uAS_pT1S.append ( uAS_pT1 )
+    uAS_pT2S.append ( uAS_pT2 )
+    uAS_pT3S.append ( uAS_pT3 )
+    uAS_pT4S.append ( uAS_pT4 )
+    uAS_pT5S.append ( uAS_pT5 )
+    uAS_pT6S.append ( uAS_pT6 )
+    uAS_pT7S.append ( uAS_pT7 )
+    
+    pT1_cumS.append ( pT1_cumN )
+    pT2_cumS.append ( pT2_cumN )
+    pT3_cumS.append ( pT3_cumN )
+    pT4_cumS.append ( pT4_cumN )
+    pT5_cumS.append ( pT5_cumN )
+    pT6_cumS.append ( pT6_cumN )
+    pT7_cumS.append ( pT7_cumN )
+    
+    census1.append ( pT1_cenS )
+    census2.append ( pT2_cenS )
+    census3.append ( pT3_cenS )
+    census4.append ( pT4_cenS )
+    census5.append ( pT5_cenS )
+    census6.append ( pT6_cenS )
+    census7.append ( pT7_cenS )
+    
+    uAS1_ratioS.append ( uAS1_ratioN )
+    uAS2_ratioS.append ( uAS2_ratioN )
+    uAS3_ratioS.append ( uAS3_ratioN )
+    uAS4_ratioS.append ( uAS4_ratioN )
+    uAS5_ratioS.append ( uAS5_ratioN )
+    uAS6_ratioS.append ( uAS6_ratioN )
+    uAS7_ratioS.append ( uAS7_ratioN )
+    
+    maxTTT_pT1.append ( maxTtt_pT1 )
+    maxTTT_pT2.append ( maxTtt_pT2 )
+    maxTTT_pT3.append ( maxTtt_pT3 )
+    maxTTT_pT4.append ( maxTtt_pT4 )
+    maxTTT_pT5.append ( maxTtt_pT5 )
+    maxTTT_pT6.append ( maxTtt_pT6 )
+    maxTTT_pT7.append ( maxTtt_pT7 )
+
+# END OF CODE    
